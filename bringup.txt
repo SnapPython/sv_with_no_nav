@@ -1,0 +1,2 @@
+sudo chmod 777 /dev/ttyUSB0
+ws://localhost:8765 foxglove_bridge
