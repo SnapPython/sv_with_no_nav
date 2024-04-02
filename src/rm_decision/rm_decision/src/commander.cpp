@@ -1,3 +1,4 @@
+#include <functional>
 #include <geometry_msgs/msg/detail/point_stamped__struct.hpp>
 #include <geometry_msgs/msg/detail/pose_stamped__struct.hpp>
 #include <geometry_msgs/msg/detail/transform_stamped__struct.hpp>
@@ -18,6 +19,11 @@
 #include <fstream>
 #include <cmath>
 #include "rm_decision/commander.hpp"
+
+//behave tree
+// #include "behaviortree_cpp/bt_factory.h"
+// file that contains the custom nodes definitions
+// #include "rm_decision/sentry_behavetree.hpp"
 
 using namespace std::chrono_literals;
 
@@ -59,7 +65,6 @@ namespace rm_decision
          "/tracker/target", rclcpp::SensorDataQoS(),std::bind(&Commander::aim_callback, this, std::placeholders::_1));
       enemypose_sub_ = this->create_subscription<  geometry_msgs::msg::PointStamped>(
          "/tracker/enemypose", 10,std::bind(&Commander::enemypose_callback, this, std::placeholders::_1));
-
       // 创建线程（处理信息和发布命令）
       commander_thread_ = std::thread(&Commander::decision, this);
       executor_thread_ = std::thread(&Commander::executor, this);
@@ -74,157 +79,87 @@ namespace rm_decision
       if(executor_thread_.joinable()){
          executor_thread_.join();
       }
-
    }
 
-   // 处理信息线程(设置状态）
+
+
+
+   // 处理信息线程(设置状态）(now using behave tree)
    void Commander::decision(){
-       rclcpp::Rate r(5);
+      rclcpp::Rate r(5);
+      // behavetree init
+      BT::BehaviorTreeFactory factory;
+      Decision decision;
+      decision.registerNodes(factory);
+
+      auto tree = factory.createTreeFromFile("./src/rm_decision/rm_decision/config/sentry_bt.xml");
+      BT::Groot2Publisher publisher(tree);
        while (rclcpp::ok())
       { 
-         // 读取信息
-         if(time < 299){
-            if((self_7.hp <= 300 || buxue || (time >= 220 && self_7.hp <= 400)) && time <= 240 && !(buxue && (time - start) > 10) ){//残血逃离
-               goal.header.stamp = this->now();
-               goal.header.frame_id = "map";
-               goal.pose.position.x = -2.45; //补血点坐标
-               goal.pose.position.y = 2.95;
-               goal.pose.position.z = 0.0;
-               goal.pose.orientation.x = 0.0;
-               goal.pose.orientation.y = 0.0;
-               goal.pose.orientation.z = 0.0;
-               goal.pose.orientation.w = 1.0;
-               setState(std::make_shared<GoAndStayState>(this));
-               RCLCPP_INFO(this->get_logger(), "补血");
-               if (!buxue) start = time;
-               buxue = true;
-               if (self_7.hp >= 550) {
-                  buxue = false;
-               }
+         std::cout << "behavetree is working now" << std::endl;
+         tree.tickWhileRunning();
+         // // 读取信息
+         // if(time < 299){
+         //    if((self_7.hp <= 300 || buxue || (time >= 220 && self_7.hp <= 400)) && time <= 240 && !(buxue && (time - start) > 10) ){//残血逃离
+         //       goal.header.stamp = this->now();
+         //       goal.header.frame_id = "map";
+         //       goal.pose.position.x = -2.45; //补血点坐标
+         //       goal.pose.position.y = 2.95;
+         //       goal.pose.position.z = 0.0;
+         //       goal.pose.orientation.x = 0.0;
+         //       goal.pose.orientation.y = 0.0;
+         //       goal.pose.orientation.z = 0.0;
+         //       goal.pose.orientation.w = 1.0;
+         //       setState(std::make_shared<GoAndStayState>(this));
+         //       RCLCPP_INFO(this->get_logger(), "补血");
+         //       if (!buxue) start = time;
+         //       buxue = true;
+         //       if (self_7.hp >= 550) {
+         //          buxue = false;
+         //       }
 
-            }
-            if(time <= 80 ){
-               goal.header.stamp = this->now();
-               goal.header.frame_id = "map";
-               goal.pose.position.x = 0.8; //stand
-               goal.pose.position.y = 2.95;
-               goal.pose.position.z = 0.0;
-               goal.pose.orientation.x = 0.0;
-               goal.pose.orientation.y = 0.0;
-               goal.pose.orientation.z = 0.0;
-               goal.pose.orientation.w = 1.0;
-               setState(std::make_shared<GoAndStayState>(this));
-               RCLCPP_INFO(this->get_logger(), "graud");
-            }
+         //    }
+         //    if(time <= 80 ){
+         //       goal.header.stamp = this->now();
+         //       goal.header.frame_id = "map";
+         //       goal.pose.position.x = 0.8; //stand
+         //       goal.pose.position.y = 2.95;
+         //       goal.pose.position.z = 0.0;
+         //       goal.pose.orientation.x = 0.0;
+         //       goal.pose.orientation.y = 0.0;
+         //       goal.pose.orientation.z = 0.0;
+         //       goal.pose.orientation.w = 1.0;
+         //       setState(std::make_shared<GoAndStayState>(this));
+         //       RCLCPP_INFO(this->get_logger(), "graud");
+         //    }
             
             
-            // else if(time >= 70 && event_data == 0 && self_7.hp >= 500){
-            //    setState(std::make_shared<PatrolState>(this));
+         //    // else if(time >= 70 && event_data == 0 && self_7.hp >= 500){
+         //    //    setState(std::make_shared<PatrolState>(this));
                
-            //    RCLCPP_INFO(this->get_logger(), "占完回防等待");
-            // }
-            // else if(time >= 50 || event_data != 0){
-            //    setState(std::make_shared<MoveState>(this));
-            //    RCLCPP_INFO(this->get_logger(), "占领增益点");
-            // }
-         
-            else {
-               setState(std::make_shared<PatrolState>(this));
-               RCLCPP_INFO(this->get_logger(), "家里逛逛");
-
-            }
-         }
-         else{
-            setState(std::make_shared<WaitState>(this));
-            RCLCPP_INFO(this->get_logger(), "等待比赛开始");
-         }
-         if ((time - start) > 20) buxue = false;
-
-         //无头
-
-         // if(time <=300){
-         //    if((self_7.hp <= 300 || (time >= 220 && self_7 <= 400)) && time <= 240){//残血逃离
-         //       goal.header.stamp = this->now();
-         //       goal.header.frame_id = "map";
-         //       goal.pose.position.x = 0.0; //补血点坐标
-         //       goal.pose.position.y = 0.0;
-         //       goal.pose.position.z = 0.0;
-         //       goal.pose.orientation.x = 0.0;
-         //       goal.pose.orientation.y = 0.0
-         //       goal.pose.orientation.z = 0.0;
-         //       goal.pose.orientation.w = 1.0;
-         //       setState(std::make_shared<GoAndStayState>(this));
-         //       RCLCPP_INFO(this->get_logger(), "残血逃离");  
-         //    }
-         //    else if(control){
-         //       if(self_7 <= 550) control = false;
-         //       goal.header.stamp = this->now();
-         //       goal.header.frame_id = "map";
-         //       goal.pose.position.x = 0.0; //初始攻击坐标靠前
-         //       goal.pose.position.y = 0.0;
-         //       goal.pose.position.z = 0.0;
-         //       goal.pose.orientation.x = 0.0;
-         //       goal.pose.orientation.y = 0.0;
-         //       goal.pose.orientation.z = 0.0;
-         //       goal.pose.orientation.w = 1.0;
-         //       setState(std::make_shared<GoAndStayState>(this));
-         //       RCLCPP_INFO(this->get_logger(), "出击");
-         //    }
-         //    else if(time <= 20){
-         //    goal.header.stamp = this->now();
-         //    goal.header.frame_id = "map";
-         //    goal.pose.position.x = 0.0; //初始攻击坐标靠前
-         //    goal.pose.position.y = 0.0;
-         //    goal.pose.position.z = 0.0;
-         //    goal.pose.orientation.x = 0.0;
-         //    goal.pose.orientation.y = 0.0;
-         //    goal.pose.orientation.z = 0.0;
-         //    goal.pose.orientation.w = 1.0;
-         //    setState(std::make_shared<GoAndStayState>(this));
-         //    RCLCPP_INFO(this->get_logger(), "出击");
-         //    control = true;
-         //    }
-         //    else if(time >= 70 && event_data = 0 && self_7.hp >= 500){
-         //       setState(std::make_shared<PatrolState>(this));
-         //       RCLCPP_INFO(this->get_logger(), "占完回防等待");
-         //    }
-         //    else if(time >= 70 && event_data = 0 && self_7.hp <= 500){
-         //       goal.header.stamp = this->now();
-         //       goal.header.frame_id = "map";
-         //       goal.pose.position.x = 0.0; //补血点坐标
-         //       goal.pose.position.y = 0.0;
-         //       goal.pose.position.z = 0.0;
-         //       goal.pose.orientation.x = 0.0;
-         //       goal.pose.orientation.y = 0.0;
-         //       goal.pose.orientation.z = 0.0;
-         //       goal.pose.orientation.w = 1.0;
-         //       setState(std::make_shared<GoAndStayState>(this));
-         //       RCLCPP_INFO(this->get_logger(), "占完回防补血");
-         //    }
-         //    else if(time >= 50 || event_data != 0){
-         //       setState(std::make_shared<MoveState>(this));
-         //       RCLCPP_INFO(this->get_logger(), "占领增益点");
-         //    }
-         // // 判断信息
-         //    // else if(tracking == true){
-         //    //    if(ifattack()) {
-         //    //        setState(std::make_shared<AttackState>(this));
-         //    //    }
-         //    //    else {
-         //    //       setState(std::make_shared<PatrolState>(this));
-         //    //    }
+         //    //    RCLCPP_INFO(this->get_logger(), "占完回防等待");
          //    // }
+         //    // else if(time >= 50 || event_data != 0){
+         //    //    setState(std::make_shared<MoveState>(this));
+         //    //    RCLCPP_INFO(this->get_logger(), "占领增益点");
+         //    // }
+         
          //    else {
          //       setState(std::make_shared<PatrolState>(this));
+         //       RCLCPP_INFO(this->get_logger(), "家里逛逛");
+
          //    }
          // }
          // else{
          //    setState(std::make_shared<WaitState>(this));
+         //    RCLCPP_INFO(this->get_logger(), "等待比赛开始");
          // }
+         // if ((time - start) > 20) buxue = false;
           r.sleep();
       }
 
    }
+
 
    // 执行器线程
    void Commander::executor(){
@@ -503,6 +438,7 @@ namespace rm_decision
    }
 
 
+   
 
 
 

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4" project_name="Project">
+    <include path="sentry_bt.xml"/>
+    <!-- Description of Node Models (used by Groot) -->
+    <TreeNodesModel>
+        <Action ID="goAround" editable="true"/>
+        <Action ID="goToBase" editable="true"/>
+        <Action ID="goToPlace" editable="true"/>
+        <Condition ID="ifAddHpConditionOk" editable="true"/>
+        <Condition ID="ifHighHp" editable="true"/>
+        <Condition ID="ifOrdered" editable="true"/>
+    </TreeNodesModel>
+</root>

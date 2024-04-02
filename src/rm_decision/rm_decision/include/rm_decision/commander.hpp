@@ -35,6 +35,15 @@
 #include "auto_aim_interfaces/msg/target.hpp"
 #include "rm_decision_interfaces/msg/receive_serial.hpp"
 
+//behave tree
+#include "behaviortree_cpp/bt_factory.h"
+#include "behaviortree_cpp/action_node.h"
+#include "behaviortree_ros2/bt_action_node.hpp"
+#include "behaviortree_ros2/plugins.hpp"
+#include "behaviortree_ros2/bt_topic_sub_node.hpp"
+#include "behaviortree_cpp/loggers/groot2_publisher.h"
+
+
 namespace rm_decision{
 
 // struct ReceivePacket
@@ -61,6 +70,54 @@ namespace rm_decision{
 //     }__attribute__((packed));
 
 class Commander;
+
+
+//behave tree class
+class Decision{
+
+public:
+
+  void registerNodes(BT::BehaviorTreeFactory& factory){
+    factory.registerSimpleCondition("IfOrdered", std::bind(&Decision::IfOrdered, this));
+    factory.registerSimpleCondition("IfHighHp", std::bind(&Decision::IfHighHp, this));
+    factory.registerSimpleCondition("IfAddHpConditionOk", std::bind(&Decision::IfAddHpConditionOk, this));
+    factory.registerSimpleAction("GoToPlace", std::bind(&Decision::GoToPlace, this));
+    factory.registerSimpleAction("GoAround", std::bind(&Decision::GoAround, this));
+    factory.registerSimpleAction("GoToBase", std::bind(&Decision::GoToBase, this));
+  }
+
+
+  BT::NodeStatus IfOrdered(){
+    std::cout << "ifOrdered is set to be false" << std::endl;
+    return BT::NodeStatus::FAILURE;
+  }
+
+  BT::NodeStatus GoToPlace(){
+    return BT::NodeStatus::SUCCESS;
+
+  }
+
+  BT::NodeStatus IfHighHp(){
+    return BT::NodeStatus::SUCCESS;
+
+  }
+
+  BT::NodeStatus GoAround(){
+    return BT::NodeStatus::SUCCESS;
+
+  }
+
+  BT::NodeStatus IfAddHpConditionOk(){
+    return BT::NodeStatus::SUCCESS;
+
+  }
+
+  BT::NodeStatus GoToBase(){
+    return BT::NodeStatus::SUCCESS;
+  }
+
+};
+
 
 class State {
 private:

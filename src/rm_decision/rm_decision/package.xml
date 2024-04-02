@@ -23,6 +23,8 @@
   <depend>yaml-cpp</depend>
   <depend>rm_decision_interfaces</depend>
   <depend>auto_aim_interfaces</depend>
+  <depend>behaviortree_cpp</depend>
+  <depend>behaviortree_ros2</depend>
   
 
 

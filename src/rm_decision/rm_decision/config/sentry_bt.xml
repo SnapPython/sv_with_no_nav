@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4"
+      main_tree_to_execute="main">
+  <BehaviorTree ID="main">
+    <Fallback>
+      <Sequence>
+        <IfOrdered/>
+        <GoToPlace/>
+      </Sequence>
+      <Sequence>
+        <IfHighHp/>
+        <GoAround/>
+      </Sequence>
+      <Sequence>
+        <IfAddHpConditionOk/>
+        <GoToBase/>
+      </Sequence>
+    </Fallback>
+  </BehaviorTree>
+
+  <!-- Description of Node Models (used by Groot) -->
+  <TreeNodesModel>
+    <Action ID="GoAround"
+            editable="true"/>
+    <Action ID="GoToBase"
+            editable="true"/>
+    <Action ID="GoToPlace"
+            editable="true"/>
+    <Condition ID="IfAddHpConditionOk"
+               editable="true"/>
+    <Condition ID="IfHighHp"
+               editable="true"/>
+    <Condition ID="IfOrdered"
+               editable="true"/>
+  </TreeNodesModel>
+
+</root>
