@@ -58,6 +58,9 @@ namespace rm_decision
       sleep(10);
       RCLCPP_INFO(this->get_logger(), "开始");
       currentState = std::make_shared<WaitState>(this);
+
+
+
       // 创建订阅(订阅裁判系统的信息)
       nav_sub_ = this->create_subscription<rm_decision_interfaces::msg::ReceiveSerial>(
          "/nav/sub", 10, std::bind(&Commander::nav_callback, this, std::placeholders::_1));
@@ -84,15 +87,20 @@ namespace rm_decision
 
 
 
+
    // 处理信息线程(设置状态）(now using behave tree)
    void Commander::decision(){
       rclcpp::Rate r(5);
       // behavetree init
       BT::BehaviorTreeFactory factory;
-      Decision decision;
-      decision.registerNodes(factory);
-
-      auto tree = factory.createTreeFromFile("./src/rm_decision/rm_decision/config/sentry_bt.xml");
+      factory.registerSimpleCondition("IfOrdered", std::bind(&Commander::IfOrdered, this));
+      factory.registerSimpleCondition("IfHighHp", std::bind(&Commander::IfHighHp, this));
+      factory.registerSimpleCondition("IfAddHpConditionOk", std::bind(&Commander::IfAddHpConditionOk, this));
+      factory.registerSimpleAction("GoToPlace", std::bind(&Commander::GoToPlace, this));
+      factory.registerSimpleAction("GoAround", std::bind(&Commander::GoAround, this));
+      factory.registerSimpleAction("GoToBase", std::bind(&Commander::GoToBase, this));
+      auto tree = factory.createTreeFromFile("./src/rm_decision/rm_decision/config/sentry_bt.xml"); //official
+      // auto tree = factory.createTreeFromFile("./rm_decision/config/sentry_bt.xml");  //for test
       BT::Groot2Publisher publisher(tree);
        while (rclcpp::ok())
       { 

@@ -72,52 +72,6 @@ namespace rm_decision{
 class Commander;
 
 
-//behave tree class
-class Decision{
-
-public:
-
-  void registerNodes(BT::BehaviorTreeFactory& factory){
-    factory.registerSimpleCondition("IfOrdered", std::bind(&Decision::IfOrdered, this));
-    factory.registerSimpleCondition("IfHighHp", std::bind(&Decision::IfHighHp, this));
-    factory.registerSimpleCondition("IfAddHpConditionOk", std::bind(&Decision::IfAddHpConditionOk, this));
-    factory.registerSimpleAction("GoToPlace", std::bind(&Decision::GoToPlace, this));
-    factory.registerSimpleAction("GoAround", std::bind(&Decision::GoAround, this));
-    factory.registerSimpleAction("GoToBase", std::bind(&Decision::GoToBase, this));
-  }
-
-
-  BT::NodeStatus IfOrdered(){
-    std::cout << "ifOrdered is set to be false" << std::endl;
-    return BT::NodeStatus::FAILURE;
-  }
-
-  BT::NodeStatus GoToPlace(){
-    return BT::NodeStatus::SUCCESS;
-
-  }
-
-  BT::NodeStatus IfHighHp(){
-    return BT::NodeStatus::SUCCESS;
-
-  }
-
-  BT::NodeStatus GoAround(){
-    return BT::NodeStatus::SUCCESS;
-
-  }
-
-  BT::NodeStatus IfAddHpConditionOk(){
-    return BT::NodeStatus::SUCCESS;
-
-  }
-
-  BT::NodeStatus GoToBase(){
-    return BT::NodeStatus::SUCCESS;
-  }
-
-};
-
 
 class State {
 private:
@@ -142,6 +96,42 @@ public:
       attack = true;
     }
   }
+};
+
+class PatrolState : public State {
+  public:
+    explicit PatrolState(Commander* commander) : State(commander) {}
+    void handle() override;
+};
+
+class GoAndStayState : public State {
+  public:
+    explicit GoAndStayState(Commander* commander) : State(commander) {}
+    void handle() override;
+};
+
+class AttackState : public State {
+  public:
+    explicit AttackState(Commander* commander) : State(commander) {}
+    virtual void handle() override;
+};
+
+class WaitState : public State {
+  public:
+    explicit WaitState(Commander* commander) : State(commander) {}
+    virtual void handle() override;
+};
+
+class MoveState : public State {
+  public:
+    explicit MoveState(Commander* commander) : State(commander) {}
+    virtual void handle() override;
+};
+
+class CjState : public State {
+  public:
+    explicit CjState(Commander* commander) : State(commander) {}
+    virtual void handle() override;
 };
 
 
@@ -251,43 +241,61 @@ public:
   std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
   // tf2_ros::Buffer buffer{get_clock()};
   // tf2_ros::TransformListener tflistener{buffer};
+
+  //this is used for bt
+  void testhandle(){
+    std::cout << "hello" << std::endl;
+    goal.header.stamp = this->now();
+    goal.header.frame_id = "map";
+    goal.pose.position.x = 1; //补血点坐标
+    goal.pose.position.y = 0;
+    goal.pose.position.z = 0.0;
+    goal.pose.orientation.x = 0.0;
+    goal.pose.orientation.y = 0.0;
+    goal.pose.orientation.z = 0.0;
+    goal.pose.orientation.w = 1.0;
+    setState(std::make_shared<GoAndStayState>(this));
+  }
+
+  void patrolhandle(){
+    std::cout << "patrolhandle is called" << std::endl;
+    setState(std::make_shared<PatrolState>(this));
+  }
+
+  BT::NodeStatus IfOrdered(){
+    std::cout << "ifOrdered is set to be true" << std::endl;
+    return BT::NodeStatus::SUCCESS;
+  }
+
+  BT::NodeStatus GoToPlace(){
+    std::cout << "GoToPlace is set ordered" << std::endl;
+    patrolhandle();
+    return BT::NodeStatus::SUCCESS;
+
+  }
+
+  BT::NodeStatus IfHighHp(){
+    return BT::NodeStatus::SUCCESS;
+
+  }
+
+  BT::NodeStatus GoAround(){
+    return BT::NodeStatus::SUCCESS;
+
+  }
+
+  BT::NodeStatus IfAddHpConditionOk(){
+    return BT::NodeStatus::SUCCESS;
+
+  }
+
+  BT::NodeStatus GoToBase(){
+    return BT::NodeStatus::SUCCESS;
+  }
+  //above is used for bt
 };
 
-class PatrolState : public State {
-  public:
-    explicit PatrolState(Commander* commander) : State(commander) {}
-    void handle() override;
-};
 
-class GoAndStayState : public State {
-  public:
-    explicit GoAndStayState(Commander* commander) : State(commander) {}
-    void handle() override;
-};
-
-class AttackState : public State {
-  public:
-    explicit AttackState(Commander* commander) : State(commander) {}
-    virtual void handle() override;
-};
-
-class WaitState : public State {
-  public:
-    explicit WaitState(Commander* commander) : State(commander) {}
-    virtual void handle() override;
-};
-
-class MoveState : public State {
-  public:
-    explicit MoveState(Commander* commander) : State(commander) {}
-    virtual void handle() override;
-};
-
-class CjState : public State {
-  public:
-    explicit CjState(Commander* commander) : State(commander) {}
-    virtual void handle() override;
-};
 
 
 }
